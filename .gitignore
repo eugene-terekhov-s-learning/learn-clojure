@@ -16,3 +16,7 @@ target/
 
 # Exercism
 .solution.json
+
+# IDEA files
+.idea/
+*.iml
