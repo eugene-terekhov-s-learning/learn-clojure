@@ -1,0 +1,47 @@
+#!/usr/bin/env bb
+
+(ns obsidian-parser
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
+
+(defn parse-links [content]
+  "Extracts wiki links from the content."
+  (re-seq #"\[\[(.+?)\]\]" content))
+
+(defn process-file [file]
+  "Processes a single Markdown file to extract its outgoing links."
+  (let [content (slurp file)
+        filename (.getName file)
+        outgoing-links (map second (parse-links content))]
+    [filename outgoing-links]))
+
+(defn find-files [dir]
+  "Recursively finds all Markdown files in the given directory."
+  (let [dir-file (io/file dir)]
+    (filter #(and (.isFile %) (re-find #"\.md$" (.getName %)))
+            (file-seq dir-file))))
+
+(defn build-link-map [vault-path]
+  "Builds a map of filenames to their outgoing links."
+  (let [files (find-files vault-path)
+        link-map (atom {})]
+    (doseq [file files]
+      (let [[filename outgoing-links] (process-file file)]
+        (swap! link-map assoc filename outgoing-links)))
+    @link-map)
+)
+
+(defn build-incoming-links [link-map]
+  "Constructs a map of filenames to their incoming links based on the outgoing links."
+  (reduce (fn [acc [filename outgoing-links]]
+            (reduce (fn [a link]
+                      (update a link #(conj (or % #{}) filename)))
+                    acc outgoing-links))
+          {}
+          link-map))
+
+(defn main [vault-path]
+  "Main function to execute the parsing and link building."
+  (println (build-link-map vault-path)))
+
+(main (first *command-line-args*))

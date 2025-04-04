@@ -1,0 +1,4 @@
+#!/usr/bin/env bb
+
+(require '[clojure.string :as str])
+(println (str/join " " ["Hello" "inner" *ns* "world!"]))
