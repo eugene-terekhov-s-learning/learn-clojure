@@ -1,5 +1,6 @@
 (ns clojure-noob.core
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.string :as str]))
 
 (def asym-hobbit-body-parts
   ;; Here are the asymmetrical body parts of a hobbit.
@@ -23,9 +24,33 @@
    {:name "left-achilles" :size 1}
    {:name "left-foot" :size 2}])
 
+(defn matching-part
+  "Matches the given left-side body part with its right-side counterpart."
+  [part]
+  {:name (str/replace (:name part) #"^left-" "right-")
+   :size (:size part)})
+
+(defn symmetrize-body-parts
+  "Expects a seq of maps that have a :name and :size"
+  [asym-body-parts]
+  (loop [remaining-asym-parts asym-body-parts final-body-parts []]
+    (if (empty? remaining-asym-parts)
+      final-body-parts
+      (let [[part & remaining] remaining-asym-parts]
+        (recur remaining
+               (into final-body-parts
+                     (set [part (matching-part part)])))))))
+
+(defn better-symmetrize-body-parts
+  "Expects a seq of maps that have a :name and :size"
+  [asym-body-parts]
+  (reduce (fn [final-body-parts part]
+            (into final-body-parts (set [part (matching-part part)])))
+          []
+          asym-body-parts))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
   (println "I'm a little asymmetrical hobbit!")
-  (println "I have" (count asym-hobbit-body-parts) "body parts.")
-  )
+  (println "I have" (count asym-hobbit-body-parts) "body parts."))
